@@ -204,3 +204,130 @@ print(rev)'''
         else:
          print('?',end=' ')
     print()'''
+
+'''a=10,20,30
+print(a,type(a))'''
+
+'''a="happy birthday"
+'htr'
+print(a[10:8-1:-1])'''
+
+'''a="happy birthday"
+'htr'
+print(a[-4:-7:-1])'''
+
+'''#Function with argument and return type
+def convert(s,out):
+    for i in s:
+        if "a"<=i<="z":
+            out+=chr(ord(i)-32)
+        else:
+            out+=i
+    return out 
+print(convert(input("enter a string:"),' '))'''
+
+'''#Function with argument and without return type
+def convert(s,out):
+    for i in s:
+        if "a"<=i<="z":
+            out+=chr(ord(i)-32)
+        else:
+            out+=i
+    print(out)
+print(convert(input("enter a string:"),' '))  //in output it will print the converted string and None because the function does not return anything.'''
+
+'''#Function without argument and with return type
+def convert(s,out):
+    for i in s:
+        if "a"<=i<="z":
+            out+=chr(ord(i)-32)
+        else:
+            out+=i
+    print(out)
+    return 20
+print(convert(input("enter a string:"),' '))'''
+
+#Function without argument and without return type
+'''def convert():
+    s=input("enter a string:")
+    out=''
+    for i in s:
+        if "a"<=i<="z":
+            out+=chr(ord(i)-32)
+        else:
+            out+=i
+    print(out)
+convert()'''
+
+'''#oops
+class college:
+    cname="GPLN"
+    cloc="Hoodi"
+s1=college()
+print(s1.cname,s1.cloc)
+print(college.cname)
+print(college.cloc)
+college.cloc="K R Puram"
+print(s1.cloc)
+print("changing loc wrtsp to class")
+s1.cloc="Hoodi" 
+print(s1.cloc)
+print(college.cloc)'''
+
+'''class college:
+    cname="GPLN"
+    cloc="Hoodi"
+s1=college()
+s1.sname="Sowmya"
+s1.phone=1234567890
+
+s2=college()
+s2.sname="Rita"
+s2.phone=9987654387
+
+s1.cloc="K R Puram"
+print('After changing location of s1')
+print(s1.cloc)
+print(s2.cloc)'''
+
+'''#constructor init
+class college:
+    cname="GPLN" 
+    cloc="Hoodi"
+
+    @classmethod
+    def disp(cls):
+        print("cls.cname:",cls.cname)
+        print("cls.cloc:",cls.cloc)
+
+    def __init__(self,name,phone,usn):
+        self.name=name
+        self.phone=phone
+        self.usn=usn
+
+    def display(self):
+            print("Name:",self.name)
+            print("Phone:",self.phone)
+            print("USN:",self.usn)
+
+    def change_name(self,newname):
+        self.name=newname
+
+    def change_phone(self,newphone):
+        self.phone=newphone
+
+s1=college("Rupa",1234567890,"1GD20CS001")
+s2=college("Rita",9987654321,"1GD20CS002")
+s1.display()
+s2.display()
+
+s1.change_name("Tupa")
+s1.display()
+s2.change_phone(9606679398)
+s2.display()'''
+
+
+
+
+
+
