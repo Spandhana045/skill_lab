@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Action Item Extractor</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 32px 16px; font-family: Arial, sans-serif;
+      background: #f3f6fb; color: #1f2937;
+    }
+    .app {
+      max-width: 850px; margin: auto; background: white; padding: 28px;
+      border-radius: 16px; box-shadow: 0 8px 28px rgba(20, 40, 80, .09);
+    }
+    h1 { margin: 0 0 8px; font-size: 27px; }
+    .sub { color: #64748b; margin: 0 0 24px; line-height: 1.5; }
+    label { display: block; font-weight: 700; margin: 18px 0 9px; }
+    textarea {
+      width: 100%; min-height: 210px; resize: vertical; padding: 14px;
+      border: 1px solid #cbd5e1; border-radius: 10px; font: 14px/1.6 Arial;
+      outline: none;
+    }
+    textarea:focus { border-color: #3867d6; box-shadow: 0 0 0 3px #3867d61a; }
+    .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 16px; }
+    select, button {
+      padding: 11px 15px; border-radius: 9px; border: 1px solid #cbd5e1;
+      font-size: 14px; background: white;
+    }
+    button { cursor: pointer; font-weight: 700; }
+    .primary { background: #2457c5; border-color: #2457c5; color: white; }
+    button:hover { opacity: .9; }
+    #status { margin-top: 15px; color: #475569; font-size: 14px; }
+    .result-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:28px; }
+    .result-head h2 { margin:0; font-size:20px; }
+    .table-wrap { overflow-x:auto; margin-top:12px; }
+    table { width:100%; border-collapse:collapse; min-width:500px; }
+    th, td { padding:12px; text-align:left; border-bottom:1px solid #e5e7eb; vertical-align:top; }
+    th { background:#f8fafc; font-size:13px; color:#475569; }
+    td { font-size:14px; }
+    .empty { padding:18px; background:#f8fafc; border-radius:9px; color:#64748b; }
+    .hint { margin-top:18px; padding:12px 14px; background:#fff7e6; border-radius:9px; color:#805b13; font-size:13px; line-height:1.5; }
+    @media (max-width: 600px) { .app { padding:20px; } h1 {font-size:23px;} }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>Meeting Action Item Extractor</h1>
+    <p class="sub">Paste meeting notes and extract tasks, owners, and deadlines.</p>
+
+    <label for="notes">Meeting notes</label>
+    <textarea id="notes">Website revamp kickoff
+Alex: What are the main features you want on the new landing page?
+Client: We need a modern hero section, customer testimonials, and an integrated booking calendar.
+Alex: Would you prefer Calendly integration or a custom-built solution?
+Client: Calendly works fine and keeps it simple.
+Alex: Perfect, I'll prepare the initial wireframes by Wednesday.</textarea>
+
+    <div class="controls">
+      <label for="mode" style="margin:0">Mode:</label>
+      <select id="mode">
+        <option value="offline">Offline</option>
+        <option value="live">Gemini (requires backend)</option>
+      </select>
+      <button class="primary" id="extract">Extract action items</button>
+      <button id="clear">Clear</button>
+    </div>
+
+    <div id="status" role="status">Ready. Offline mode works directly in your browser.</div>
+
+    <section id="results" aria-live="polite">
+      <div class="result-head"><h2>Extracted action items</h2></div>
+      <p class="empty">Your results will appear here.</p>
+    </section>
+  </main>
+
+  <script>
+    const notes = document.getElementById("notes");
+    const mode = document.getElementById("mode");
+    const statusBox = document.getElementById("status");
+    const results = document.getElementById("results");
+
+    function offlineExtract(text) {
+      const actions = [];
+      const pattern = /^([^:\\n]+):\\s*(.+?)\\s+by\\s+([^\\n.]+)[.]?$/i;
+
+      for (const line of text.split(/\\r?\\n/)) {
+        const match = line.trim().match(pattern);
+        if (match) {
+          actions.push({
+            owner: match[1].trim(),
+            task: match[2].trim(),
+            deadline: match[3].trim()
+          });
+        }
+      }
+      return actions;
+    }
+
+    function showResults(actions) {
+      const old = results.querySelector(".table-wrap, .empty");
+      if (old) old.remove();
+
+      if (!actions.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "No action items found. Try lines such as: Alex: Prepare the report by Friday.";
+        results.appendChild(empty);
+        return;
+      }
+
+      const wrap = document.createElement("div");
+      wrap.className = "table-wrap";
+      const table = document.createElement("table");
+      table.innerHTML = "<thead><tr><th>Owner</th><th>Task</th><th>Deadline</th></tr></thead>";
+      const tbody = document.createElement("tbody");
+
+      actions.forEach(item => {
+        const row = document.createElement("tr");
+        [item.owner, item.task, item.deadline].forEach(value => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          row.appendChild(cell);
+        });
+        tbody.appendChild(row);
+      });
+
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      results.appendChild(wrap);
+
+      const buttons = document.createElement("div");
+      buttons.className = "controls";
+      const copy = document.createElement("button");
+      copy.textContent = "Copy JSON";
+      copy.onclick = async () => {
+        await navigator.clipboard.writeText(JSON.stringify({actions}, null, 2));
+        statusBox.textContent = "JSON copied to clipboard.";
+      };
+      const download = document.createElement("button");
+      download.textContent = "Download JSON";
+      download.onclick = () => {
+        const blob = new Blob([JSON.stringify({actions}, null, 2)], {type:"application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = "action-items.json"; a.click();
+        URL.revokeObjectURL(url);
+      };
+      buttons.append(copy, download);
+      results.appendChild(buttons);
+    }
+
+    document.getElementById("extract").addEventListener("click", async () => {
+      if (mode.value === "live") {
+        statusBox.textContent = "Gemini mode needs a small server-side backend. Do not put your Gemini API key in this HTML file, because visitors could see it.";
+        return;
+      }
+      const actions = offlineExtract(notes.value);
+      showResults(actions);
+      statusBox.textContent = `${actions.length} action item(s) found using offline mode.`;
+    });
+
+    document.getElementById("clear").addEventListener("click", () => {
+      notes.value = "";
+      results.innerHTML = '<div class="result-head"><h2>Extracted action items</h2></div><p class="empty">Your results will appear here.</p>';
+      statusBox.textContent = "Notes cleared.";
+    });
+  </script>
+</body>
+</html>
